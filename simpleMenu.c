@@ -93,14 +93,20 @@ int main(int argc, char **argv)
 			case 27:
 				running = false;
 				break;
+			case 'j':
 			case KEY_DOWN:
 				if (cursor < menuSize - 1) {
 					cursor++;
+				} else {
+					cursor = 0;
 				}
 				break;
+			case 'k':
 			case KEY_UP:
 				if (cursor > 0) {
 					cursor--;
+				} else {
+					cursor = menuSize - 1;
 				}
 				break;
 			case '\r':
