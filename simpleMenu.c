@@ -5,22 +5,35 @@
 enum {
 	PAIR_HOVER = 1
 };
+typedef struct MenuItem TMenuItem;
 
-void drawMenu(WINDOW *win, char **items, int cursor) {
+typedef void (*TCallback)();
+
+struct MenuItem {
+	char *caption;
+	TCallback action;
+};
+
+void onExitAction() {
+	endwin();
+	exit(0);
+}
+
+void drawMenu(WINDOW *win, const TMenuItem* menu, int cursor) {
 	const int wh = getmaxy(win), ww = getmaxx(win);
 	int x = 0, y = 1;
 
 	wmove(win, 0, 0);
 	wprintw(win, "Cursor: %d", cursor);
 
-	for (size_t i = 0; items[i] != NULL; i++, y++) {
+	for (size_t i = 0; menu[i].caption != NULL; i++, y++) {
 		wmove(win, y, x);
 		if (cursor == i) {
 			attron(COLOR_PAIR(PAIR_HOVER));
-			waddstr(win, items[i]);
+			waddstr(win, menu[i].caption);
 			attroff(COLOR_PAIR(PAIR_HOVER));
 		} else {
-			waddstr(win, items[i]);
+			waddstr(win, menu[i].caption);
 		}
 	}
 	wrefresh(win);
@@ -38,6 +51,7 @@ int setup() {
 	}
 	raw();
 	noecho();
+	nonl();
 	cbreak();
 	keypad(stdscr, TRUE);
 	curs_set(0);
@@ -59,15 +73,19 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	char* MENU[] = {
-		"File", "Edit", "View", "Help", "Exit",
-		NULL
+	const TMenuItem MENU[] = {
+		{ "File", NULL },
+		{ "Edit", NULL },
+		{ "View", NULL },
+		{ "Help", NULL },
+		{ "Exit", onExitAction },
+		{ NULL, NULL }
 	};
 	const int menuSize = 5;
 
 	int cursor = 0;
 
-	int running = 0;
+	bool running = true;
 	while (running) {
 		drawMenu(stdscr, MENU, cursor);
 		switch (getch()) {
@@ -83,6 +101,11 @@ int main(int argc, char **argv)
 			case KEY_UP:
 				if (cursor > 0) {
 					cursor--;
+				}
+				break;
+			case '\r':
+				if (MENU[cursor].action) {
+					MENU[cursor].action();
 				}
 				break;
 		}
