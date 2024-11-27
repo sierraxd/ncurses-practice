@@ -2,12 +2,14 @@
 #include <ncurses.h>
 #include <stdlib.h>
 
+#define UPDATE_TIME 100
+
 enum {
 	PAIR_HOVER = 1
 };
-typedef struct MenuItem TMenuItem;
 
 typedef void (*TCallback)();
+typedef struct MenuItem TMenuItem;
 
 struct MenuItem {
 	char *caption;
@@ -62,7 +64,9 @@ int setup() {
 		return -2;
 	}
 	initColor();
-	wtimeout(stdscr, 0);
+
+	wtimeout(stdscr, UPDATE_TIME);
+	/* nodelay(stdscr, TRUE); */
 
 	return 0;
 }
@@ -85,10 +89,15 @@ int main(int argc, char **argv)
 
 	int cursor = 0;
 
+	drawMenu(stdscr, MENU, cursor);
 	bool running = true;
 	while (running) {
-		drawMenu(stdscr, MENU, cursor);
-		switch (getch()) {
+		int ch = getch();
+		if (ch == ERR) {
+			continue;
+		}
+
+		switch (ch) {
 			case 'q':
 			case 27:
 				running = false;
@@ -115,6 +124,7 @@ int main(int argc, char **argv)
 				}
 				break;
 		}
+		drawMenu(stdscr, MENU, cursor);
 	}
 
 	endwin();
